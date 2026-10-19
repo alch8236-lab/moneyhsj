@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MONEY·3D — интерактивная 3D-визуализация финансов и легальные способы заработка">
+<title>MONEY·3D — Легальные способы заработка</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --gold:#f5c542;
+    --gold-2:#ffdf7e;
+    --gold-dark:#a8781a;
+    --bg:#05070d;
+    --card:rgba(18,22,34,.72);
+    --border:rgba(245,197,66,.18);
+    --text:#e8ecf4;
+    --muted:#8b94a8;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  #bg3d{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;opacity:.85}
+  .vignette{
+    position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(5,7,13,0) 0%, rgba(5,7,13,.55) 62%, rgba(5,7,13,.94) 100%),
+      linear-gradient(180deg, rgba(5,7,13,.75) 0%, rgba(5,7,13,.25) 30%, rgba(5,7,13,.85) 100%);
+  }
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    background:rgba(5,7,13,.62);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-wrap{
+    max-width:1180px;margin:0 auto;padding:14px 22px;
+    display:flex;align-items:center;gap:26px;flex-wrap:wrap;
+  }
+  .logo{
+    font-family:'Playfair Display',serif;font-weight:900;font-size:22px;
+    letter-spacing:.5px;
+    background:linear-gradient(120deg,#fff3b0,var(--gold) 45%,var(--gold-dark));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    white-space:nowrap;
+  }
+  .logo span{color:var(--gold);-webkit-text-fill-color:var(--gold);font-size:14px;vertical-align:super}
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .tab{
+    position:relative;background:transparent;border:1px solid transparent;
+    color:var(--muted);font-family:inherit;font-size:14px;font-weight:600;
+    padding:9px 16px;border-radius:11px;cursor:pointer;
+    transition:.25s cubic-bezier(.4,0,.2,1);white-space:nowrap;
+  }
+  .tab:hover{color:var(--text);background:rgba(245,197,66,.07)}
+  .tab.active{
+    color:#1a1305;
+    background:linear-gradient(135deg,var(--gold-2),var(--gold));
+    box-shadow:0 6px 24px -6px rgba(245,197,66,.65);
+    border-color:rgba(255,255,255,.25);
+  }
+  main{
+    position:relative;z-index:2;max-width:1180px;margin:0 auto;
+    padding:44px 22px 90px;min-height:calc(100vh - 72px);
+  }
+  .panel{display:none;animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both}
+  .panel.active{display:block}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+  h1{
+    font-family:'Playfair Display',serif;font-size:clamp(38px,7vw,74px);
+    line-height:1.02;font-weight:900;letter-spacing:-1.5px;margin-bottom:20px;
+  }
+  h1 .grad{
+    background:linear-gradient(115deg,#fff8d8,var(--gold) 40%,#e0a52c 70%,var(--gold-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% auto;animation:shine 6s linear infinite;
+  }
+  @keyframes shine{to{background-position:200% center}}
+  h2{
+    font-family:'Playfair Display',serif;font-size:clamp(26px,4vw,40px);
+    font-weight:700;margin-bottom:14px;letter-spacing:-.5px;
+  }
+  h3{font-size:18px;font-weight:700;margin-bottom:8px}
+  .lead{
+    font-size:clamp(15px,2vw,18px);color:#b7c0d4;
+    max-width:660px;line-height:1.7;margin-bottom:34px;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;
+    color:var(--gold);border:1px solid var(--border);
+    background:rgba(245,197,66,.06);padding:7px 15px;border-radius:100px;margin-bottom:22px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:28px}
+  .card{
+    position:relative;background:var(--card);border:1px solid var(--border);
+    border-radius:18px;padding:24px;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    transition:.35s cubic-bezier(.16,1,.3,1);overflow:hidden;
+  }
+  .card::before{
+    content:'';position:absolute;inset:0;border-radius:18px;
+    background:radial-gradient(500px circle at var(--mx,50%) var(--my,0%), rgba(245,197,66,.13), transparent 45%);
+    opacity:0;transition:opacity .4s;pointer-events:none;
+  }
+  .card:hover::before{opacity:1}
+  .card:hover{transform:translateY(-6px);border-color:rgba(245,197,66,.5);box-shadow:0 22px 50px -22px rgba(245,197,66,.45)}
+  .card .ico{font-size:30px;margin-bottom:14px;display:block;filter:drop-shadow(0 6px 14px rgba(245,197,66,.4))}
+  .card p{font-size:14px;color:#a3adc2;line-height:1.65}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .tag{
+    font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;letter-spacing:.4px;
+    background:rgba(245,197,66,.1);color:var(--gold-2);border:1px solid rgba(245,197,66,.22);
+  }
+  .tag.green{background:rgba(64,220,140,.1);color:#5ce6a0;border-color:rgba(64,220,140,.25)}
+  .tag.blue{background:rgba(90,160,255,.1);color:#7fb4ff;border-color:rgba(90,160,255,.25)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:46px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .stat b{
+    display:block;font-family:'Playfair Display',serif;font-size:34px;
+    background:linear-gradient(120deg,var(--gold-2),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px;
+  }
+  .stat span{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.4px}
+  .controls{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);margin-top:26px;
+  }
+  .ctrl-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .ctrl-row:last-child{margin-bottom:0}
+  .ctrl-row label{
+    font-size:13px;font-weight:700;color:var(--muted);min-width:150px;
+    letter-spacing:.4px;text-transform:uppercase;
+  }
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;flex:1;min-width:150px;height:6px;border-radius:100px;
+    background:linear-gradient(90deg,var(--gold) var(--p,50%),rgba(255,255,255,.1) var(--p,50%));
+    outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#fff6cf,var(--gold));
+    box-shadow:0 0 16px rgba(245,197,66,.85),0 0 0 4px rgba(245,197,66,.12);
+    cursor:pointer;transition:.2s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+  input[type=range]::-moz-range-thumb{
+    width:20px;height:20px;border:none;border-radius:50%;
+    background:linear-gradient(135deg,#fff6cf,var(--gold));
+    box-shadow:0 0 16px rgba(245,197,66,.85);cursor:pointer;
+  }
+  .val{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold);min-width:74px;text-align:right}
+  .swatches{display:flex;gap:10px}
+  .sw{width:36px;height:36px;border-radius:11px;border:2px solid rgba(255,255,255,.12);cursor:pointer;transition:.25s}
+  .sw:hover{transform:translateY(-3px)}
+  .sw.active{border-color:#fff;box-shadow:0 0 20px -2px currentColor;transform:translateY(-3px)}
+  .calc{display:grid;grid-template-columns:1fr 1.25fr;gap:22px;margin-top:26px}
+  @media(max-width:860px){.calc{grid-template-columns:1fr}}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .field input{
+    width:100%;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;padding:13px 16px;color:var(--text);font-family:inherit;
+    font-size:16px;font-weight:600;outline:none;transition:.25s;
+  }
+  .field input:focus{border-color:var(--gold);background:rgba(245,197,66,.07);box-shadow:0 0 0 4px rgba(245,197,66,.09)}
+  .result{
+    background:linear-gradient(150deg,rgba(245,197,66,.14),rgba(245,197,66,.03));
+    border:1px solid rgba(245,197,66,.35);border-radius:18px;padding:26px;
+    text-align:center;margin-bottom:20px;
+  }
+  .result .big{
+    font-family:'Playfair Display',serif;font-size:clamp(30px,5vw,44px);font-weight:900;
+    background:linear-gradient(120deg,#fff8d8,var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1;
+  }
+  .result .cap{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .rows{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,.035);border-radius:11px;font-size:14px}
+  .row span{color:var(--muted);font-weight:600}
+  .row b{color:var(--gold-2);font-weight:700}
+  #chart{width:100%;height:170px;margin-top:18px;display:block}
+  .tip{
+    display:flex;gap:16px;background:var(--card);border:1px solid var(--border);
+    border-left:3px solid var(--gold);border-radius:14px;padding:20px 22px;
+    margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:.3s;
+  }
+  .tip:hover{transform:translateX(6px);border-left-color:var(--gold-2)}
+  .tip .n{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:rgba(245,197,66,.35);line-height:1;min-width:34px}
+  .tip p{font-size:14.5px;color:#a3adc2;line-height:1.65;margin-top:4px}
+  footer{
+    position:relative;z-index:2;text-align:center;padding:34px 22px 44px;
+    border-top:1px solid rgba(245,197,66,.1);color:#5d6579;font-size:12.5px;line-height:1.8;
+    background:rgba(5,7,13,.7);
+  }
+  footer b{color:var(--gold)}
+  ::-webkit-scrollbar{width:10px}
+  ::-webkit-scrollbar-track{background:#05070d}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--gold-dark),var(--gold));border-radius:10px;border:2px solid #05070d}
+</style>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+<div class="vignette"></div>
+
+<header>
+  <div class="nav-wrap">
+    <div class="logo">MONEY<span>3D</span></div>
+    <nav id="nav">
+      <button class="tab active" data-panel="home">Главная</button>
+      <button class="tab" data-panel="viz">3D Визуализация</button>
+      <button class="tab" data-panel="ways">Способы заработка</button>
+      <button class="tab" data-panel="calc">Калькулятор</button>
+      <button class="tab" data-panel="tips">Советы</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ГЛАВНАЯ -->
+  <section class="panel active" id="home">
+    <div class="eyebrow"><span class="dot"></span> Только легальные источники дохода</div>
+    <h1>Деньги — это<br><span class="grad">технология.</span></h1>
+    <p class="lead">
+      Интерактивная 3D-визуализация мира финансов и подробный разбор реальных способов
+      заработка: от фриланса и инвестиций до цифровых товаров и аренды.
+      Без «схем», без риска для кошелька и закона.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>12+</b><span>Проверенных направлений</span></div>
+      <div class="stat"><b>100%</b><span>Легально и прозрачно</span></div>
+      <div class="stat"><b>0 ₽</b><span>Порог входа в 5 из них</span></div>
+      <div class="stat"><b>3D</b><span>Живая визуализация</span></div>
+    </div>
+    <div class="grid" style="margin-top:34px">
+      <div class="card">
+        <span class="ico">🪙</span>
+        <h3>Пассивный доход</h3>
+        <p>Вклады, облигации, ИИС, дивиденды. Деньги работают, пока вы занимаетесь своими делами — но требуют капитала и терпения.</p>
+        <div class="tags"><span class="tag green">низкий риск</span><span class="tag">долгий срок</span></div>
+      </div>
+      <div class="card">
+        <span class="ico">⚡</span>
+        <h3>Активный доход</h3>
+        <p>Фриланс, удалённая работа, репетиторство, подработки. Быстрый старт без капитала, но доход привязан ко времени.</p>
+        <div class="tags"><span class="tag blue">быстрый старт</span><span class="tag">0 ₽ вход</span></div>
+      </div>
+      <div class="card">
+        <span class="ico">🚀</span>
+        <h3>Масштабируемый доход</h3>
+        <p>Цифровые товары, контент, маркетплейсы. Создаёте один раз — продаёте многократно. Требует времени и навыков.</p>
+        <div class="tags"><span class="tag">высокий потолок</span><span class="tag blue">актив</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3D -->
+  <section class="panel" id="viz">
+    <div class="eyebrow"><span class="dot"></span> WebGL · Three.js</div>
+    <h2>3D-визуализация капитала</h2>
+    <p class="lead">
+      Золотые монеты в реальном времени парят в пространстве. Двигайте мышью — сцена
+      следует за взглядом. Настройте скорость вращения, количество монет и материал.
+    </p>
+    <div class="controls">
+      <div class="ctrl-row">
+        <label>Скорость</label>
+        <input type="range" id="rSpeed" min="0" max="300" value="100">
+        <div class="val" id="vSpeed">1.0×</div>
+      </div>
+      <div class="ctrl-row">
+        <label>Монет</label>
+        <input type="range" id="rCount" min="10" max="120" value="60" step="5">
+        <div class="val" id="vCount">60</div>
+      </div>
+      <div class="ctrl-row">
+        <label>Материал</label>
+        <div class="swatches">
+          <div class="sw active" data-col="0xf5c542" style="background:linear-gradient(135deg,#ffe9a8,#a8781a);color:#f5c542" title="Золото"></div>
+          <div class="sw" data-col="0xd8e0ec" style="background:linear-gradient(135deg,#ffffff,#8b98ab);color:#d8e0ec" title="Серебро"></div>
+          <div class="sw" data-col="0x2ee6a8" style="background:linear-gradient(135deg,#9cffdc,#0a7a55);color:#2ee6a8" title="Изумруд"></div>
+          <div class="sw" data-col="0xff6b9d" style="background:linear-gradient(135deg,#ffc2d6,#a3205a);color:#ff6b9d" title="Рубин"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:26px">
+      <div class="card">
+        <span class="ico">🖱️</span>
+        <h3>Управление мышью</h3>
+        <p>Движение курсора плавно наклоняет камеру — эффект параллакса глубины.</p>
+      </div>
+      <div class="card">
+        <span class="ico">✨</span>
+        <h3>Частицы</h3>
+        <p>900 светящихся точек в аддитивном режиме создают эффект «золотой пыли».</p>
+      </div>
+      <div class="card">
+        <span class="ico">🎨</span>
+        <h3>Живые текстуры</h3>
+        <p>Символ $ генерируется на canvas в реальном времени и накладывается на монеты.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- СПОСОБЫ -->
+  <section class="panel" id="ways">
+    <div class="eyebrow"><span class="dot"></span> Только проверенные варианты</div>
+    <h2>Легальные способы заработка</h2>
+    <p class="lead">
+      Каждое направление — с указанием сложности, порога входа и реалистичного диапазона дохода.
+      Доход зависит от навыков, региона и времени — цифры носят ориентировочный характер.
+    </p>
+    <div class="grid" id="waysGrid"></div>
+  </section>
+
+  <!-- КАЛЬКУЛЯТОР -->
+  <section class="panel" id="calc">
+    <div class="eyebrow"><span class="dot"></span> Сложный процент</div>
+    <h2>Калькулятор капитала</h2>
+    <p class="lead">
+      Посмотрите, как регулярные вложения превращаются в капитал благодаря сложному проценту.
+      Расчёт — ориентировочный, без учёта налогов и инфляции.
+    </p>
+    <div class="calc">
+      <div class="controls" style="margin-top:0">
+        <div class="field"><label>Стартовый капитал, ₽</label><input type="number" id="cStart" value="50000" min="0" step="1000"></div>
+        <div class="field"><label>Ежемесячное пополнение, ₽</label><input type="number" id="cMonth" value="15000" min="0" step="500"></div>
+        <div class="field"><label>Годовая ставка, %</label><input type="number" id="cRate" value="12" min="0" max="60" step="0.5"></div>
+        <div class="field"><label>Срок, лет</label><input type="number" id="cYears" value="10" min="1" max="40" step="1"></div>
+      </div>
+      <div class="controls" style="margin-top:0">
+        <div class="result">
+          <div class="cap">Итоговый капитал</div>
+          <div class="big" id="cTotal">0 ₽</div>
+        </div>
+        <div class="rows">
+          <div class="row"><span>Вложено вами</span><b id="cInvested">0 ₽</b></div>
+          <div class="row"><span>Доход от процентов</span><b id="cProfit">0 ₽</b></div>
+          <div class="row"><span>Множитель</span><b id="cMult">×1.00</b></div>
+        </div>
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- СОВЕТЫ -->
+  <section class="panel" id="tips">
+    <div class="eyebrow"><span class="dot"></span> Финансовая гигиена</div>
+    <h2>Правила, которые работают</h2>
+    <p class="lead">Прежде чем зарабатывать — научитесь не терять. Эти принципы спасают больше денег, чем любая «секретная схема».</p>
+    <div class="tip"><div class="n">01</div><div><h3>Подушка безопасности</h3><p>Держите 3–6 месячных расходов на накопительном счёте с быстрым доступом. Это защита от увольнения, болезни и срочных трат без долгов.</p></div></div>
+    <div class="tip"><div class="n">02</div><div><h3>Диверсификация</h3><p>Не складывайте всё в один актив, один банк или один источник дохода. Разные риски не должны наступать одновременно.</p></div></div>
+    <div class="tip"><div class="n">03</div><div><h3>Никаких «гарантированных 300%»</h3><p>Если обещают огромную доходность без риска — это либо мошенничество, либо финансовая пирамида. Легальная доходность всегда сопряжена с риском.</p></div></div>
+    <div class="tip"><div class="n">04</div><div><h3>Платите налоги</h3><p>Легальный доход = декларирование. Для фриланса удобны самозанятость (НПД) или ИП. Это защищает от блокировок счетов и штрафов.</p></div></div>
+    <div class="tip"><div class="n">05</div><div><h3>Инвестируйте в навыки</h3><p>Самый высокий ROI — в собственные компетенции. Один освоенный навык может поднять доход в разы быстрее, чем любая биржа.</p></div></div>
+    <div class="tip"><div class="n">06</div><div><h3>Считайте реальную доходность</h3><p>Вычитайте инфляцию, налоги и комиссии. 12% годовых при инфляции 8% — это всего около 4% реального роста.</p></div></div>
+    <div class="tip"><div class="n">07</div><div><h3>Начните с малого</h3><p>Не ждите «идеального момента» и большого капитала. Первые 10 000 ₽ и первый клиент важнее, чем теория на 100 страниц.</p></div></div>
+  </section>
+
+</main>
+
+<footer>
+  <b>MONEY·3D</b> — образовательный проект. Материалы не являются индивидуальной инвестиционной рекомендацией.<br>
+  Инвестиции связаны с риском потери капитала. Проверяйте лицензии организаций.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============ 1. ДАННЫЕ ============ */
+const WAYS = [
+  {ico:'💻',t:'Фриланс',d:'Веб-разработка, дизайн, копирайтинг, монтаж видео. Заказы на Kwork, FL.ru, Upwork, Хабр Фриланс. Оплата за проект или почасовая.',tags:[['средняя',''],['0 ₽ вход','blue'],['30–300к ₽/мес','green']]},
+  {ico:'🏢',t:'Удалённая работа',d:'Полная занятость в найме: HH.ru, LinkedIn, Хабр Карьера. Стабильный оклад, соцпакет, предсказуемый доход. Требует резюме и портфолио.',tags:[['средняя',''],['стабильно','green'],['50–250к ₽/мес','blue']]},
+  {ico:'📈',t:'Инвестиции',d:'Брокерский счёт, ИИС (налоговый вычет), ОФЗ, индексные ETF, дивидендные акции. Требует капитала и горизонта от 3 лет.',tags:[['высокая',''],['капитал','blue'],['5–20% годовых','green']]},
+  {ico:'🏦',t:'Вклады и накопления',d:'Накопительные счёта и срочные вклады в банках с госстрахованием до 1,4 млн ₽. Самый простой и предсказуемый вариант.',tags:[['низкая','green'],['любой капитал','blue'],['10–18% годовых','']]},
+  {ico:'🎨',t:'Цифровые товары',d:'Шаблоны, пресеты, шрифты, иконки, электронные книги. Продажа на Gumroad, Etsy, Boosty, Creative Market. Создал один раз — продаёшь многократно.',tags:[['средняя',''],['высокий потолок','green'],['пассивный','blue']]},
+  {ico:'🎓',t:'Репетиторство',d:'Школьные предметы, языки, программирование, подготовка к ЕГЭ. Профи.ру, Репетиторы.рф, собственные ученики. Отличный старт без вложений.',tags:[['низкая','green'],['0 ₽ вход','blue'],['40–150к ₽/мес','']]},
+  {ico:'📹',t:'Контент и медиа',d:'YouTube, Telegram-каналы, Дзен, Rutube. Монетизация рекламой, донатами и партнёрскими программами. Долгий разгон, но масштабируемо.',tags:[['высокая',''],['долгий старт','blue'],['неограничен','green']]},
+  {ico:'🛒',t:'Маркетплейсы',d:'Ozon, Wildberries, Яндекс Маркет. Перепродажа, handmade, дропшиппинг, печать на заказ. Нужны закупки и навык аналитики ниш.',tags:[['средняя',''],['закупки','blue'],['50–500к ₽/мес','green']]},
+  {ico:'📷',t:'Стоковые фото и видео',d:'Shutterstock, Adobe Stock, Depositphotos. Загружаете работы — получаете роялти с каждой продажи. Долгий накопительный эффект.',tags:[['средняя',''],['пассивный','green'],['копейки→$$','blue']]},
+  {ico:'🚗',t:'Аренда имущества',d:'Сдача квартиры, авто, инструментов, техники, фотооборудования. Авито Аренда, Яндекс Аренда. Нужен актив в собственности.',tags:[['низкая','green'],['нужен актив','blue'],['пассивный','']]},
+  {ico:'🧪',t:'Тестирование и опросы',d:'UserTesting, Яндекс.Толока, панели опросов. Небольшой, но реальный доход за простые задачи. Хорошо как подработка.',tags:[['низкая','green'],['0 ₽ вход','blue'],['5–25к ₽/мес','']]},
+  {ico:'💳',t:'Кэшбэк и бонусы',d:'Backit, LetyShops, банковские кэшбэк-программы, бонусы АЗС и аптек. Не заработок, а возврат части трат — до 5–15% с покупок.',tags:[['низкая','green'],['без усилий','blue'],['экономия','']]}
+];
+document.getElementById('waysGrid').innerHTML = WAYS.map(w => `
+  <div class="card">
+    <span class="ico">${w.ico}</span>
+    <h3>${w.t}</h3>
+    <p>${w.d}</p>
+    <div class="tags">${w.tags.map(t=>`<span class="tag ${t[1]}">${t[0]}</span>`).join('')}</div>
+  </div>`).join('');
+
+document.addEventListener('mousemove', e => {
+  document.querySelectorAll('.card').forEach(card => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
+
+/* ============ 2. ВКЛАДКИ ============ */
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(tab => tab.addEventListener('click', () => {
+  tabs.forEach(t => t.classList.remove('active'));
+  panels.forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(tab.dataset.panel).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}));
+
+/* ============ 3. THREE.JS ============ */
+(function(){
+  const canvas = document.getElementById('bg3d');
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x05070d, 0.028);
+
+  const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 16);
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  function makeCoinTexture(){
+    const c = document.createElement('canvas');
+    c.width = c.height = 512;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(210, 200, 40, 256, 256, 250);
+    grd.addColorStop(0, '#fffbe6'); grd.addColorStop(.35, '#ffe089');
+    grd.addColorStop(.72, '#e0a82e'); grd.addColorStop(1, '#8a6410');
+    g.fillStyle = grd;
+    g.beginPath(); g.arc(256, 256, 248, 0, Math.PI*2); g.fill();
+    g.strokeStyle = 'rgba(120,84,12,.85)'; g.lineWidth = 10;
+    g.beginPath(); g.arc(256, 256, 236, 0, Math.PI*2); g.stroke();
+    g.strokeStyle = 'rgba(255,250,220,.5)'; g.lineWidth = 4;
+    g.beginPath(); g.arc(256, 256, 210, 0, Math.PI*2); g.stroke();
+    const sh = g.createLinearGradient(120, 110, 400, 420);
+    sh.addColorStop(0, 'rgba(255,255,255,.55)');
+    sh.addColorStop(.5, 'rgba(255,255,255,0)');
+    sh.addColorStop(1, 'rgba(255,255,255,.18)');
+    g.fillStyle = sh;
+    g.beginPath(); g.arc(256, 256, 246, 0, Math.PI*2); g.fill();
+    g.font = '900 300px Georgia, "Times New Roman", serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(90,60,8,.9)'; g.fillText('$', 256, 262);
+    g.fillStyle = 'rgba(255,252,230,.55)'; g.fillText('$', 251, 254);
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const coinTex = makeCoinTexture();
+
+  const coinGeo = new THREE.CylinderGeometry(1, 1, 0.15, 48);
+  coinGeo.rotateX(Math.PI / 2);
+
+  let sideMat, faceMat;
+  function buildMaterials(color){
+    sideMat = new THREE.MeshStandardMaterial({color, metalness:.95, roughness:.28, emissive:new THREE.Color(color).multiplyScalar(.10)});
+    faceMat = new THREE.MeshStandardMaterial({color:0xffffff, map:coinTex, metalness:.8, roughness:.32, emissive:new THREE.Color(color).multiplyScalar(.12), emissiveMap:coinTex});
+    return [sideMat, faceMat, faceMat];
+  }
+  const coinMats = buildMaterials(0xf5c542);
+
+  const coinGroup = new THREE.Group();
+  scene.add(coinGroup);
+  const coins = [];
+  const rand = (a,b)=> a + Math.random()*(b-a);
+
+  function createCoin(){
+    const m = new THREE.Mesh(coinGeo, coinMats);
+    m.scale.setScalar(rand(0.45,1.25));
+    m.position.set(rand(-18,18), rand(-12,12), rand(-16,4));
+    m.rotation.set(rand(0,Math.PI*2), rand(0,Math.PI*2), rand(0,Math.PI*2));
+    m.userData = {
+      baseY:m.position.y,
+      spin:rand(0.003,0.016)*(Math.random()>.5?1:-1),
+      spinZ:rand(-0.008,0.008),
+      fs:rand(0.25,0.8), fo:rand(0,Math.PI*2), amp:rand(0.3,1.0)
+    };
+    return m;
+  }
+  function setCoinCount(n){
+    while(coins.length<n){ const c=createCoin(); coins.push(c); coinGroup.add(c); }
+    while(coins.length>n){ const c=coins.pop(); coinGroup.remove(c); }
+  }
+  setCoinCount(60);
+
+  const P_COUNT = 900;
+  const pPos = new Float32Array(P_COUNT*3);
+  for(let i=0;i<P_COUNT;i++){
+    pPos[i*3]=rand(-40,40); pPos[i*3+1]=rand(-26,26); pPos[i*3+2]=rand(-40,8);
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+  const pMat = new THREE.PointsMaterial({
+    color:0xf5c542, size:0.10, transparent:true, opacity:.75,
+    blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  scene.add(new THREE.AmbientLight(0x5a6688, 1.15));
+  const key = new THREE.DirectionalLight(0xfff2d0, 2.0); key.position.set(6,10,8); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x4d7dff, 1.0); rim.position.set(-10,-6,-6); scene.add(rim);
+  const goldLight = new THREE.PointLight(0xffc93c, 2.2, 46, 2); goldLight.position.set(0,0,8); scene.add(goldLight);
+  const goldLight2 = new THREE.PointLight(0xff9a3c, 1.4, 40, 2); goldLight2.position.set(-12,7,4); scene.add(goldLight2);
+
+  let mouseX=0, mouseY=0, targetX=0, targetY=0;
+  window.addEventListener('mousemove', e => {
+    mouseX = (e.clientX/innerWidth)*2-1;
+    mouseY = (e.clientY/innerHeight)*2-1;
+  });
+  window.addEventListener('touchmove', e => {
+    if(!e.touches[0]) return;
+    mouseX = (e.touches[0].clientX/innerWidth)*2-1;
+    mouseY = (e.touches[0].clientY/innerHeight)*2-1;
+  }, {passive:true});
+  window.addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  let speedMul = 1.0;
+  const rSpeed = document.getElementById('rSpeed');
+  const vSpeed = document.getElementById('vSpeed');
+  rSpeed.addEventListener('input', () => {
+    speedMul = rSpeed.value/100;
+    vSpeed.textContent = speedMul.toFixed(1)+'×';
+    rSpeed.style.setProperty('--p', (rSpeed.value/rSpeed.max*100)+'%');
+  });
+  rSpeed.style.setProperty('--p', '33%');
+
+  const rCount = document.getElementById('rCount');
+  const vCount = document.getElementById('vCount');
+  rCount.addEventListener('input', () => {
+    const n = +rCount.value;
+    vCount.textContent = n;
+    setCoinCount(n);
+    rCount.style.setProperty('--p', ((n-10)/110*100)+'%');
+  });
+  rCount.style.setProperty('--p', '45%');
+
+  document.querySelectorAll('.sw').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.sw').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      const col = parseInt(sw.dataset.col);
+      const mats = buildMaterials(col);
+      coinMats[0]=mats[0]; coinMats[1]=mats[1]; coinMats[2]=mats[2];
+      coinMats[0].needsUpdate = true;
+      pMat.color.setHex(col);
+      goldLight.color.setHex(col);
+    });
+  });
+
+  const clock = new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    targetX += (mouseX*3.2 - targetX)*0.045;
+    targetY += (-mouseY*2.2 - targetY)*0.045;
+    camera.position.x = targetX;
+    camera.position.y = targetY;
+    camera.lookAt(0,0,0);
+
+    for(let i=0;i<coins.length;i++){
+      const c = coins[i], u = c.userData;
+      c.rotation.y += u.spin*speedMul;
+      c.rotation.z += u.spinZ*speedMul;
+      c.position.y = u.baseY + Math.sin(t*u.fs+u.fo)*u.amp;
+      c.position.x += Math.sin(t*u.fs*0.4+u.fo)*0.0035*speedMul;
+    }
+    coinGroup.rotation.y = Math.sin(t*0.09)*0.35;
+    coinGroup.rotation.x = Math.cos(t*0.07)*0.12;
+
+    particles.rotation.y += 0.0006*speedMul;
+    particles.rotation.x = Math.sin(t*0.05)*0.06;
+    pMat.opacity = 0.55 + Math.sin(t*1.4)*0.16;
+    goldLight.intensity = 1.9 + Math.sin(t*1.8)*0.55;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+/* ============ 4. КАЛЬКУЛЯТОР ============ */
+(function(){
+  const el = id => document.getElementById(id);
+  const inputs = ['cStart','cMonth','cRate','cYears'].map(el);
+  const outTotal = el('cTotal'), outInv = el('cInvested'),
+        outProfit = el('cProfit'), outMult = el('cMult');
+  const chart = el('chart');
+  const ctx = chart.getContext('2d');
+  const fmt = n => new Intl.NumberFormat('ru-RU', {maximumFractionDigits:0}).format(Math.round(n))+' ₽';
+
+  let series = [];
+
+  function compute(){
+    const P = Math.max(0, +el('cStart').value || 0);
+    const C = Math.max(0, +el('cMonth').value || 0);
+    const rate = Math.max(0, +el('cRate').value || 0)/100/12;
+    const years = Math.min(40, Math.max(1, Math.round(+el('cYears').value || 1)));
+
+    series = [];
+    let balance = P, invested = P;
+    series.push({y:0, total:P, invested:P});
+
+    for(let m=1; m<=years*12; m++){
+      balance *= (1+rate);
+      balance += C;
+      invested += C;
+      if(m%12===0) series.push({y:m/12, total:balance, invested});
+    }
+
+    outTotal.textContent = fmt(balance);
+    outInv.textContent = fmt(invested);
+    outProfit.textContent = fmt(balance-invested);
+    outMult.textContent = '×'+(invested>0?(balance/invested).toFixed(2):'0.00');
+    drawChart();
+  }
+
+  function drawChart(){
+    const dpr = Math.min(devicePixelRatio,2);
+    const w = chart.clientWidth || 400;
+    const h = 170;
+    chart.width = w*dpr; chart.height = h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);
+    if(!series.length) return;
+
+    const maxV = Math.max(...series.map(s=>s.total)) || 1;
+    const padT = 12, padB = 18;
+    const W = w, H = h - padT - padB;
+    const X = i => (i/(series.length-1))*W;
+    const Y = v => padT + H - (v/maxV)*H;
+
+    ctx.strokeStyle = 'rgba(255,255,255,.055)'; ctx.lineWidth = 1;
+    for(let i=0;i<=4;i++){
+      const y = padT + (H/4)*i;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(0));
+    series.forEach((s,i)=>ctx.lineTo(X(i), Y(s.invested)));
+    ctx.lineTo(X(series.length-1), Y(0)); ctx.closePath();
+    const gInv = ctx.createLinearGradient(0,padT,0,padT+H);
+    gInv.addColorStop(0,'rgba(90,160,255,.35)');
+    gInv.addColorStop(1,'rgba(90,160,255,.02)');
+    ctx.fillStyle = gInv; ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(series[0].total));
+    series.forEach((s,i)=>ctx.lineTo(X(i), Y(s.total)));
+    ctx.lineTo(X(series.length-1), Y(0));
+    ctx.lineTo(X(0), Y(0)); ctx.closePath();
+    const gTot = ctx.createLinearGradient(0,padT,0,padT+H);
+    gTot.addColorStop(0,'rgba(245,197,66,.42)');
+    gTot.addColorStop(1,'rgba(245,197,66,.02)');
+    ctx.fillStyle = gTot; ctx.fill();
+
+    ctx.beginPath();
+    series.forEach((s,i)=>{
+      const x=X(i), y=Y(s.total);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 2.4; ctx.lineJoin='round';
+    ctx.shadowColor = 'rgba(245,197,66,.85)'; ctx.shadowBlur = 12;
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    ctx.fillStyle = 'rgba(139,148,168,.85)';
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    const step = Math.max(1, Math.round(series.length/8));
+    series.forEach((s,i)=>{
+      if(i%step===0 || i===series.length-1) ctx.fillText(s.y+'г', X(i), h-4);
+    });
+  }
+
+  inputs.forEach(inp => inp.addEventListener('input', compute));
+  window.addEventListener('resize', drawChart);
+  document.querySelector('.tab[data-panel="calc"]').addEventListener('click', ()=>setTimeout(compute,60));
+  compute();
+})();
+</script>
+</body>
+</html>
